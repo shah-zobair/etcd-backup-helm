@@ -1,0 +1,21 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: s3-tools
+  namespace: {{ .Values.etcd_backup_namespace }}
+spec:
+  selector:
+    matchLabels:
+      app: s3-tools
+  replicas: 1
+  template:
+    metadata:
+      annotations:
+      labels:
+        app: s3-tools
+    spec:
+      containers:
+      - name: s3-tools
+        image: {{ .Values.s3_tools_image }}
+        ports:
+        - containerPort: 8080

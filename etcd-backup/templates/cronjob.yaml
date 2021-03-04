@@ -1,0 +1,107 @@
+apiVersion: batch/v1beta1
+kind: CronJob
+metadata:
+  labels:
+    purpose: etcd-backup
+  name: cronjob-etcd-backup
+  namespace: {{ .Values.etcd_backup_namespace }}
+spec:
+  concurrencyPolicy: Forbid
+  failedJobsHistoryLimit: 5
+  jobTemplate:
+    spec:
+      backoffLimit: 0
+      template:
+        spec:
+          activeDeadlineSeconds: 200
+          containers:
+          - command:
+            - /usr/local/bin/etcd-backup.sh
+            image: {{ .Values.etcd_image }}
+            imagePullPolicy: IfNotPresent
+            name: etcd-backup
+            resources:
+              requests:
+                cpu: 300m
+                memory: 250Mi
+            securityContext:
+              privileged: true
+            terminationMessagePath: /dev/termination-log
+            terminationMessagePolicy: FallbackToLogsOnError
+            volumeMounts:
+            - mountPath: /etc/ssl/etcd/
+              name: certs
+            - mountPath: /etc/etcd/
+              name: conf
+            - mountPath: /etc/kubernetes/
+              name: kubeconfig
+            - mountPath: /usr/local/bin
+              name: scripts
+            - mountPath: /usr/local/bin/etcd-backup.sh
+              name: etcd-backup-scripts
+              subPath: etcd-backup.sh
+            - mountPath: /usr/local/bin/etcd-snapshot-backup-disconnected.sh
+              name: etcd-backup-scripts
+              subPath: etcd-snapshot-backup-disconnected.sh
+            - mountPath: /usr/local/bin/backup_script-4.5.sh
+              name: etcd-backup-scripts
+              subPath: backup_script-4.5.sh
+            - mountPath: /usr/local/bin/backup_script-4.3.sh
+              name: etcd-backup-scripts
+              subPath: backup_script-4.3.sh
+            env:
+              - name: MASTER_IP
+                valueFrom:
+                  fieldRef: 
+                    fieldPath: status.hostIP
+              - name: NODE_IP
+                valueFrom:
+                  fieldRef:
+                    fieldPath: status.hostIP
+              - name: S3ACCESSKEY
+                value: {{ .Values.s3accesskey }}
+              - name: S3SECRETKEY
+                value: {{ .Values.s3secretkey }}
+              - name: S3ENDPOINT
+                value: {{ .Values.s3endpoint }}
+              - name: S3BUCKET
+                value: {{ .Values.s3bucket }}
+          nodeSelector:
+            node-role.kubernetes.io/master: ""
+          dnsPolicy: ClusterFirst
+          securityContext:
+            runAsUser: 0
+          serviceAccount: {{ .Values.etcd_backup_username }}
+          serviceAccountName: {{ .Values.etcd_backup_username }}
+          hostNetwork: true
+          restartPolicy: Never
+          terminationGracePeriodSeconds: 30
+          tolerations:
+          - effect: NoSchedule
+            operator: Exists
+          - effect: NoExecute
+            operator: Exists
+          volumes:
+          - name: certs
+            hostPath:
+              path: /etc/kubernetes/static-pod-resources/etcd-member
+              type: ""
+          - name: conf
+            hostPath:
+              path: /etc/etcd
+              type: ""
+          - name: kubeconfig
+            hostPath:
+              path: /etc/kubernetes
+              type: ""
+          - name: scripts
+            hostPath:
+              path: /usr/local/bin
+              type: ""
+          - name: etcd-backup-scripts
+            configMap:
+              name: "{{ .Values.etcd_backup_configmap }}"
+              defaultMode: 0755
+  schedule: '{{ .Values.etcd_backup_schedule }}'
+  startingDeadlineSeconds: 200
+  successfulJobsHistoryLimit: 5

@@ -1,0 +1,15 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: s3-tools
+  namespace: {{ .Values.etcd_backup_namespace }}
+  labels:
+    app: s3-tools
+    service: s3-tools
+spec:
+  ports:
+  - port: 80
+    name: http
+    targetPort: 8080
+  selector:
+    app: s3-tools

@@ -1,0 +1,24 @@
+---
+
+metadata:
+  site: canniff
+  name: lab-nokia
+
+site: canniff
+etcd_backup_namespace: "openshift-cluster-ops"
+etcd_backup_username: "etcd-backup-user"
+etcd_backup_user: "system:serviceaccount:{{ .Values.etcd_backup_namespace }}:{{ .Values.etcd_backup_username }}"
+etcd_cluster_id: "demo"
+etcd_backup_configmap: "etcd-backup-scripts"
+etcd_backup_schedule: "0 */2 * * *"
+etcd_backup_retention: "20d2h30m"
+# FOR OpenShift 4.3
+etcd_image: "quay.io/openshift-release-dev/ocp-v4.0-art-dev@sha256:5ec245797eed60ffd2c360f8d8d9b2937a089cd26d7f755205b8904840a53e3c"
+# FOR OpenShift 4.5
+# etcd_image: "quay.io/openshift-release-dev/ocp-v4.0-art-dev@sha256:3c5301e86aa93d36d936cd5bd6b3575c98c4d33205be38c6dcbe09774b95ca7a"
+
+s3_tools_image: "nexus-repo.example.com/ocp4/s3-tools:latest"
+s3accesskey: user
+s3secretkey: pass
+s3endpoint: "s3.example.com"
+s3bucket: etcd-backups
